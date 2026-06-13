@@ -1,0 +1,110 @@
+---
+// Task detail page – shows task, commitment status, ability to mark complete
+
+import KioskLayout from '@/layouts/KioskLayout.astro';
+import Card from '@/components/ui/Card.astro';
+import Button from '@/components/ui/Button.astro';
+import CommitmentButton from '@/components/tasks/CommitmentButton.astro';
+import CoinDisplay from '@/components/tasks/CoinDisplay.astro';
+import { getTaskById } from '@/lib/services/task';
+import { getCommitmentChain, isAgreedBy } from '@/lib/services/commitment';
+import { getCoinBalance } from '@/lib/services/coins';
+
+const { id } = Astro.params;
+const date = new URL(Astro.request.url).searchParams.get('date') || new Date().toISOString().split('T')[0];
+const personId = new URL(Astro.request.url).searchParams.get('personId') || '';
+
+if (!id || !personId) {
+  return Astro.redirect('/');
+}
+
+const task = getTaskById(id);
+if (!task) {
+  return Astro.redirect('/');
+}
+
+// In Phase 2, we don't yet have full task instance queries, so this is a placeholder
+const commitmentChain = getCommitmentChain(personId); // TODO: query by task instance
+const isCommitted = isAgreedBy(personId, personId);
+const coinBalance = getCoinBalance(personId);
+---
+
+<KioskLayout title={task.title}>
+  <div class="max-w-2xl mx-auto">
+    <Card className="mb-6 text-center">
+      <div class="text-7xl mb-4">{task.icon}</div>
+      <h1 class="text-4xl font-bold text-gray-900">{task.title}</h1>
+      {task.description && <p class="text-gray-600 mt-4">{task.description}</p>}
+      {task.coins > 0 && (
+        <div class="mt-4 text-2xl font-bold text-yellow-600">
+          🪙 {task.coins} Coins für Fertigstellung
+        </div>
+      )}
+    </Card>
+
+    <!-- Commitment section (if required) -->
+    {
+      task.requiresCommitment && (
+        <Card className="mb-6">
+          <CommitmentButton
+            taskInstanceId={id}
+            personId={personId}
+            isCommitted={isCommitted}
+            requiresCommitment={true}
+          />
+        </Card>
+      )
+    }
+
+    <!-- Status -->
+    <Card className="mb-6">
+      <h2 class="text-lg font-semibold text-gray-900 mb-3">Status</h2>
+      <p class="text-gray-600">
+        {
+          isCommitted
+            ? '✅ Du hast zugesagt – zeige durch Abhaken, dass es fertig ist!'
+            : '⭕ Bitte sprich mit einem Erwachsenen über diese Aufgabe.'
+        }
+      </p>
+    </Card>
+
+    <!-- Coin preview -->
+    {task.coins > 0 && (
+      <Card className="mb-6">
+        <CoinDisplay balance={coinBalance} personName="Deine" />
+      </Card>
+    )}
+
+    <div class="flex gap-4">
+      <Button
+        variant="primary"
+        size="lg"
+        className="flex-1"
+        onclick="markComplete()"
+      >
+        ✅ Fertig!
+      </Button>
+      <Button
+        variant="ghost"
+        size="lg"
+        className="flex-1"
+        onclick="window.history.back()"
+      >
+        ← Zurück
+      </Button>
+    </div>
+  </div>
+</KioskLayout>
+
+<script define:vars={{ id, personId, taskCoins: task.coins }}>
+  window.markComplete = async function () {
+    try {
+      // In Phase 2, this is a placeholder
+      // Later: POST to /api/commitments with type='done'
+      alert('Phase 2 Placeholder: "Fertig" wird in vollständiger Implementierung gebucht');
+    } catch (error) {
+      console.error('Error marking complete:', error);
+      alert('Fehler. Bitte erneut versuchen.');
+    }
+  };
+</script>

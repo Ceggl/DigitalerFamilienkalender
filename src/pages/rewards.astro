@@ -1,0 +1,46 @@
+---
+// Rewards shop page
+
+import KioskLayout from '@/layouts/KioskLayout.astro';
+import Card from '@/components/ui/Card.astro';
+import Button from '@/components/ui/Button.astro';
+import RewardShop from '@/components/tasks/RewardShop.astro';
+import CoinDisplay from '@/components/tasks/CoinDisplay.astro';
+import { getOrCreateDefaultHousehold } from '@/lib/services/household';
+import { getRewardsByHousehold } from '@/lib/services/reward';
+import { getCoinBalance } from '@/lib/services/coins';
+
+const personId = new URL(Astro.request.url).searchParams.get('personId') || '';
+
+if (!personId) {
+  return Astro.redirect('/login');
+}
+
+const household = await getOrCreateDefaultHousehold();
+const rewards = household ? getRewardsByHousehold(household.id) : [];
+const coinBalance = getCoinBalance(personId);
+---
+
+<KioskLayout title="Belohnungen">
+  <div class="max-w-6xl mx-auto">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div class="lg:col-span-2">
+        <Card>
+          <RewardShop rewards={rewards} currentBalance={coinBalance} personId={personId} />
+        </Card>
+      </div>
+
+      <div>
+        <Card>
+          <CoinDisplay balance={coinBalance} personName="Deine" />
+        </Card>
+
+        <div class="mt-6">
+          <Button variant="ghost" size="md" className="w-full" onclick="window.location.href='/my-tasks'">
+            ← Zu meinen Aufgaben
+          </Button>
+        </div>
+      </div>
+    </div>
+  </div>
+</KioskLayout>

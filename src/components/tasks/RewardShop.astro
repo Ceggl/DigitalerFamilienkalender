@@ -1,0 +1,84 @@
+---
+// Reward shop – display available rewards and allow redemption
+
+interface Reward {
+  id: string;
+  title: string;
+  icon: string;
+  costCoins: number;
+  requiresApproval: boolean;
+}
+
+interface Props {
+  rewards: Reward[];
+  currentBalance: number;
+  personId: string;
+}
+
+const { rewards, currentBalance, personId } = Astro.props;
+
+const canAfford = (cost: number) => currentBalance >= cost;
+---
+
+<div class="space-y-4">
+  <h2 class="text-2xl font-bold text-gray-900">🎁 Belohnungen</h2>
+
+  <div class="grid grid-cols-2 lg:grid-cols-3 gap-4">
+    {
+      rewards.map((reward) => {
+        const affordable = canAfford(reward.costCoins);
+        return (
+          <button
+            class={`rounded-2xl border-4 p-6 text-center transition-all duration-200 active:scale-95 ${
+              affordable
+                ? 'border-green-400 bg-green-50 hover:shadow-lg hover:border-green-600'
+                : 'border-gray-200 bg-gray-50 opacity-60 cursor-not-allowed'
+            }`}
+            onclick={`${affordable ? `redeemReward('${reward.id}', '${personId}')` : ''}`}
+            disabled={!affordable}
+          >
+            <div class="text-5xl mb-2">{reward.icon}</div>
+            <h3 class="font-semibold text-gray-900 text-sm line-clamp-2">{reward.title}</h3>
+            <div class="text-yellow-600 font-bold mt-2">🪙 {reward.costCoins}</div>
+            {!affordable && (
+              <div class="text-xs text-gray-600 mt-2">
+                {reward.costCoins - currentBalance} Münzen zu wenig
+              </div>
+            )}
+          </button>
+        );
+      })
+    }
+  </div>
+
+  {
+    rewards.length === 0 && (
+      <div class="text-center py-12 bg-gray-50 rounded-2xl">
+        <p class="text-gray-600">Noch keine Belohnungen verfügbar</p>
+      </div>
+    )
+  }
+</div>
+
+<script define:vars={{ personId }}>
+  window.redeemReward = async function (rewardId, personId) {
+    try {
+      const response = await fetch('/api/reward-redemptions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ rewardId, personId }),
+      });
+
+      if (response.ok) {
+        const widget = document.querySelector('[data-reward-shop]');
+        widget.classList.add('animate-confirm');
+        setTimeout(() => {
+          location.reload();
+        }, 500);
+      }
+    } catch (error) {
+      console.error('Error redeeming reward:', error);
+      alert('Fehler beim Einlösen. Bitte erneut versuchen.');
+    }
+  };
+</script>

@@ -1,0 +1,79 @@
+---
+// Large "I promise!" button for task commitment
+// Animated, kid-friendly, clear feedback
+
+interface Props {
+  taskInstanceId: string;
+  personId: string;
+  witnessedBy?: string;
+  isCommitted?: boolean;
+  requiresCommitment?: boolean;
+  className?: string;
+}
+
+const {
+  taskInstanceId,
+  personId,
+  witnessedBy,
+  isCommitted = false,
+  requiresCommitment = true,
+  className = '',
+} = Astro.props;
+
+if (!requiresCommitment) {
+  return null;
+}
+---
+
+<div
+  class={`w-full max-w-sm mx-auto ${className}`}
+  data-commitment-widget
+  data-task-instance-id={taskInstanceId}
+  data-person-id={personId}
+>
+  {
+    !isCommitted ? (
+      <button
+        type="button"
+        class="w-full py-6 px-8 bg-green-500 hover:bg-green-600 text-white font-bold text-2xl rounded-2xl shadow-lg hover:shadow-xl active:scale-95 transition-all duration-200 animate-pulse"
+        onclick={`commitTask('${taskInstanceId}', '${personId}', '${witnessedBy || ''}')`}
+      >
+        👍 Ich mache das!
+      </button>
+    ) : (
+      <div class="w-full py-6 px-8 bg-green-100 border-2 border-green-500 rounded-2xl text-center">
+        <p class="text-green-700 font-bold text-lg">✅ Zugesagt!</p>
+        <p class="text-green-600 text-sm mt-1">Zeige durch Abhaken, dass du es fertig machst.</p>
+      </div>
+    )
+  }
+</div>
+
+<script define:vars={{ taskInstanceId, personId, witnessedBy }}>
+  window.commitTask = async function (taskInstanceId, personId, witnessedBy) {
+    try {
+      const response = await fetch('/api/commitments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          taskInstanceId,
+          personId,
+          type: 'agreed',
+          witnessedBy: witnessedBy || undefined,
+        }),
+      });
+
+      if (response.ok) {
+        // Visual feedback
+        const widget = document.querySelector('[data-commitment-widget]');
+        widget.classList.add('animate-confirm');
+        setTimeout(() => {
+          location.reload();
+        }, 500);
+      }
+    } catch (error) {
+      console.error('Error committing task:', error);
+      alert('Fehler beim Speichern. Bitte erneut versuchen.');
+    }
+  };
+</script>

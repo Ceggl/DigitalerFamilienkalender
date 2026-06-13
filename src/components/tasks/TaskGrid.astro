@@ -1,0 +1,59 @@
+---
+// Grid of tasks for a person on a specific day
+// Touch-optimized with large icons and status indicators
+
+interface Task {
+  id: string;
+  title: string;
+  icon: string;
+  coins: number;
+  requiresCommitment: boolean;
+  status: 'open' | 'committed' | 'done' | 'verified' | 'missed';
+}
+
+interface Props {
+  tasks: Task[];
+  personId?: string;
+  date?: string;
+}
+
+const { tasks, personId = '', date = '' } = Astro.props;
+
+const statusEmoji = {
+  open: '⭕',
+  committed: '👍',
+  done: '✅',
+  verified: '⭐',
+  missed: '❌',
+};
+---
+
+<div class="grid grid-cols-2 lg:grid-cols-3 gap-4">
+  {
+    tasks.map((task) => (
+      <a
+        href={`/task/${task.id}?date=${date}`}
+        class="bg-white rounded-xl border-2 border-gray-100 p-4 hover:border-blue-400 hover:shadow-lg transition-all duration-200 active:scale-95 min-h-48 flex flex-col items-center justify-center text-center gap-3"
+      >
+        <div class="text-5xl">{task.icon}</div>
+        <div>
+          <h3 class="font-semibold text-gray-900 text-sm line-clamp-2">{task.title}</h3>
+          {task.coins > 0 && (
+            <p class="text-xs text-yellow-600 font-semibold mt-1">
+              🪙 {task.coins} Coins
+            </p>
+          )}
+        </div>
+        <div class="text-2xl">{statusEmoji[task.status]}</div>
+      </a>
+    ))
+  }
+
+  {
+    tasks.length === 0 && (
+      <div class="col-span-full text-center py-12">
+        <p class="text-gray-600 text-lg">Keine Aufgaben für heute 🎉</p>
+      </div>
+    )
+  }
+</div>
