@@ -1,0 +1,85 @@
+---
+// Day view – shows all events for a specific day
+
+import KioskLayout from '@/layouts/KioskLayout.astro';
+import Card from '@/components/ui/Card.astro';
+import Button from '@/components/ui/Button.astro';
+import { getOrCreateDefaultHousehold } from '@/lib/services/household';
+import { getEventsByDateRange } from '@/lib/services/calendar-event';
+
+const { date } = Astro.params;
+
+if (!date) {
+  return Astro.redirect('/');
+}
+
+const dateObj = new Date(date + 'T00:00:00');
+const nextDay = new Date(dateObj);
+nextDay.setDate(nextDay.getDate() + 1);
+
+const household = await getOrCreateDefaultHousehold();
+let dayEvents = [];
+
+if (household) {
+  dayEvents = getEventsByDateRange(household.id, dateObj, nextDay).filter(
+    (e) => e.startsAt.startsWith(date)
+  );
+}
+
+const dateDisplay = dateObj.toLocaleDateString('de-DE', {
+  weekday: 'long',
+  year: 'numeric',
+  month: 'long',
+  day: 'numeric',
+});
+---
+
+<KioskLayout title={`Tag: ${date}`}>
+  <div class="max-w-2xl mx-auto">
+    <Card className="mb-6">
+      <h2 class="text-3xl font-bold text-gray-900 capitalize">{dateDisplay}</h2>
+      <p class="text-gray-600 mt-2">
+        {dayEvents.length} Termin{dayEvents.length !== 1 ? 'e' : ''} an diesem Tag
+      </p>
+    </Card>
+
+    {
+      dayEvents.length === 0 ? (
+        <Card className="mb-6 text-center">
+          <p class="text-gray-600 text-lg">Keine Termine an diesem Tag 😊</p>
+        </Card>
+      ) : (
+        <div class="space-y-4 mb-6">
+          {dayEvents.map((event) => (
+            <Card>
+              <div class="flex items-start gap-4">
+                {event.icon && <div class="text-4xl">{event.icon}</div>}
+                <div class="flex-1">
+                  <h3 class="font-semibold text-gray-900 text-lg">{event.title}</h3>
+                  {event.location && (
+                    <p class="text-gray-600 text-sm mt-1">📍 {event.location}</p>
+                  )}
+                  <div class="text-gray-600 text-sm mt-2">
+                    {new Date(event.startsAt).toLocaleTimeString('de-DE', {
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    })}
+                    {' - '}
+                    {new Date(event.endsAt).toLocaleTimeString('de-DE', {
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    })}
+                  </div>
+                </div>
+              </div>
+            </Card>
+          ))}
+        </div>
+      )
+    }
+
+    <Button variant="ghost" size="md" className="w-full" onclick="window.history.back()">
+      ← Zurück zum Kalender
+    </Button>
+  </div>
+</KioskLayout>

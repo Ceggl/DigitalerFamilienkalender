@@ -1,0 +1,32 @@
+---
+// Page to add a new event
+
+import KioskLayout from '@/layouts/KioskLayout.astro';
+import Card from '@/components/ui/Card.astro';
+import EventForm from '@/components/calendar/EventForm.astro';
+import Button from '@/components/ui/Button.astro';
+---
+
+<KioskLayout title="Neuer Termin">
+  <div class="max-w-2xl mx-auto">
+    <Card className="mb-6">
+      <h2 class="text-2xl font-bold text-gray-900 mb-2">➕ Neuer Familienkalender-Termin</h2>
+      <p class="text-gray-600">Erstelle einen Termin, den alle sehen können.</p>
+    </Card>
+
+    <Card>
+      <EventForm />
+    </Card>
+
+    <div class="mt-6">
+      <Button
+        variant="ghost"
+        size="md"
+        className="w-full"
+        onclick="window.history.back()"
+      >
+        ← Zurück
+      </Button>
+    </div>
+  </div>
+</KioskLayout>

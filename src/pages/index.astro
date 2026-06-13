@@ -1,17 +1,24 @@
 ---
-// Home page / calendar overview
-// Shows a family calendar view (initially empty for Phase 0)
+// Home page / calendar overview with real data
 
 import KioskLayout from '@/layouts/KioskLayout.astro';
 import Card from '@/components/ui/Card.astro';
 import Button from '@/components/ui/Button.astro';
+import MonthCalendar from '@/components/calendar/MonthCalendar.astro';
+import { getOrCreateDefaultHousehold } from '@/lib/services/household';
+import { getEventsByDateRange } from '@/lib/services/calendar-event';
 
-const today = new Date().toLocaleDateString('de-DE', {
-  weekday: 'long',
-  year: 'numeric',
-  month: 'long',
-  day: 'numeric',
-});
+const household = await getOrCreateDefaultHousehold();
+const today = new Date();
+const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+const monthEnd = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+
+let events = [];
+if (household) {
+  events = getEventsByDateRange(household.id, monthStart, monthEnd);
+}
+
+const monthName = today.toLocaleDateString('de-DE', { month: 'long', year: 'numeric' });
 ---
 
 <KioskLayout title="Familienkalender">
@@ -19,55 +26,75 @@ const today = new Date().toLocaleDateString('de-DE', {
     <!-- Main calendar area -->
     <div class="lg:col-span-2">
       <Card className="mb-6">
-        <div class="text-center">
-          <h2 class="text-2xl font-semibold text-gray-900 mb-2">Heute</h2>
-          <p class="text-gray-600">{today}</p>
+        <div class="flex items-center justify-between">
+          <div>
+            <h2 class="text-3xl font-bold text-gray-900 capitalize">{monthName}</h2>
+            <p class="text-gray-600 mt-1">
+              {events.length} Termin{events.length !== 1 ? 'e' : ''} diesen Monat
+            </p>
+          </div>
+          <div class="text-right">
+            <div class="text-5xl font-bold text-blue-600">{today.getDate()}</div>
+            <div class="text-gray-600 uppercase text-sm">
+              {today.toLocaleDateString('de-DE', { weekday: 'short' })}
+            </div>
+          </div>
         </div>
       </Card>
 
-      <!-- Calendar grid placeholder -->
+      <!-- Calendar Grid -->
       <Card>
-        <div class="grid grid-cols-7 gap-2">
-          {
-            ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'].map((day) => (
-              <div class="text-center font-semibold text-sm text-gray-600 py-2">{day}</div>
-            ))
-          }
-          {
-            Array.from({ length: 35 }).map((_, i) => (
-              <div class="aspect-square bg-gray-50 rounded-lg border border-gray-200 flex items-center justify-center text-gray-400 hover:bg-gray-100 cursor-pointer transition-colors">
-                {i + 1}
-              </div>
-            ))
-          }
-        </div>
+        <MonthCalendar
+          year={today.getFullYear()}
+          month={today.getMonth()}
+          events={events}
+        />
       </Card>
     </div>
 
     <!-- Sidebar -->
     <div class="space-y-4">
       <Card>
-        <h3 class="text-lg font-semibold text-gray-900 mb-4">Schnellzugriff</h3>
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">📋 Navigation</h3>
         <div class="space-y-3">
-          <Button variant="primary" size="lg" className="w-full">
+          <Button variant="primary" size="lg" className="w-full" onclick="window.location.href='/login'">
             👤 Anmelden
           </Button>
-          <Button variant="secondary" size="lg" className="w-full">
+          <Button variant="secondary" size="lg" className="w-full" onclick="window.location.href='/event-add'">
             ➕ Termin hinzufügen
           </Button>
-          <Button variant="ghost" size="lg" className="w-full">
+          <Button variant="ghost" size="lg" className="w-full" onclick="window.location.href='/settings'">
             ⚙️ Einstellungen
           </Button>
         </div>
       </Card>
 
       <Card>
-        <h3 class="text-lg font-semibold text-gray-900 mb-3">Info</h3>
+        <h3 class="text-lg font-semibold text-gray-900 mb-3">📊 Übersicht</h3>
+        <dl class="space-y-2 text-sm">
+          <div class="flex justify-between">
+            <dt class="text-gray-600">Familienmitglieder:</dt>
+            <dd class="font-semibold text-gray-900">–</dd>
+          </div>
+          <div class="flex justify-between">
+            <dt class="text-gray-600">Heute fällig:</dt>
+            <dd class="font-semibold text-gray-900">–</dd>
+          </div>
+          <div class="flex justify-between">
+            <dt class="text-gray-600">Diese Woche:</dt>
+            <dd class="font-semibold text-gray-900">{events.length}</dd>
+          </div>
+        </dl>
+      </Card>
+
+      <Card>
+        <h3 class="text-lg font-semibold text-gray-900 mb-3">ℹ️ Info</h3>
         <p class="text-sm text-gray-600">
-          Willkommen im Familienkalender! Der Plan ist verfügbar in <code className="bg-gray-100 px-2 py-1 rounded"
-            >docs/plan.md</code
-          >.
+          Familienkalender Phase 1: Kalender & Personen aktiv.
         </p>
+        <a href="/docs/plan.md" class="text-blue-600 text-xs mt-2 block">
+          → Plan ansehen
+        </a>
       </Card>
     </div>
   </div>

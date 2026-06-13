@@ -1,0 +1,29 @@
+---
+// Settings page placeholder
+
+import KioskLayout from '@/layouts/KioskLayout.astro';
+import Card from '@/components/ui/Card.astro';
+import Button from '@/components/ui/Button.astro';
+---
+
+<KioskLayout title="Einstellungen">
+  <div class="max-w-2xl mx-auto">
+    <Card className="mb-6">
+      <h2 class="text-2xl font-bold text-gray-900">⚙️ Einstellungen</h2>
+      <p class="text-gray-600 mt-2">Konfiguriere deinen Familienkalender. (Phase 2)</p>
+    </Card>
+
+    <Card className="mb-6">
+      <h3 class="text-lg font-semibold text-gray-900 mb-4">👥 Familienmitglieder</h3>
+      <p class="text-gray-600 text-sm mb-4">
+        Hier kannst du in Phase 2 Personen hinzufügen und bearbeiten.
+      </p>
+    </Card>
+
+    <div>
+      <Button variant="ghost" size="md" className="w-full" onclick="window.location.href='/'">
+        ← Zur Startseite
+      </Button>
+    </div>
+  </div>
+</KioskLayout>
