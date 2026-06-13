@@ -1,0 +1,64 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Touch-friendly base styles */
+html {
+  /* Disable zoom on iOS to prevent accidental zooms */
+  touch-action: manipulation;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+}
+
+body {
+  @apply bg-white text-gray-900 font-sans antialiased;
+  /* Ensure full viewport height for kiosk mode */
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+/* Remove default button styling for custom touch buttons */
+button {
+  @apply font-inherit;
+}
+
+/* Ensure proper spacing for touch targets */
+a,
+button,
+input[type='button'],
+input[type='submit'] {
+  @apply min-h-[2.75rem] min-w-[2.75rem];
+}
+
+/* Animation for positive feedback */
+@keyframes pulse-confirm {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.animate-confirm {
+  animation: pulse-confirm 0.4s ease-in-out;
+}
+
+/* Smooth fade-in for new elements */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.3s ease-out;
+}

@@ -1,0 +1,58 @@
+---
+// Mobile-optimized layout for phones/tablets
+// Responsive, portrait-first
+
+import '@/styles/base.css';
+
+interface Props {
+  title?: string;
+  showHeader?: boolean;
+}
+
+const { title = 'Familienkalender', showHeader = true } = Astro.props;
+---
+
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no"
+    />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="theme-color" content="#3b82f6" />
+    <title>{title}</title>
+  </head>
+  <body class="flex flex-col min-h-screen bg-gray-50 safe-area-inset-bottom">
+    {
+      showHeader && (
+        <header class="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
+          <div class="max-w-lg mx-auto px-4 py-3">
+            <h1 class="text-xl font-bold text-gray-900">{title}</h1>
+          </div>
+        </header>
+      )
+    }
+
+    <main class="flex-1 max-w-lg mx-auto w-full p-4 pb-safe-area-inset-bottom">
+      <slot />
+    </main>
+
+    <!-- Spacer for iOS safe area -->
+    <div class="h-safe-area-inset-bottom"></div>
+  </body>
+</html>
+
+<style is:global>
+  html,
+  body {
+    margin: 0;
+    padding: 0;
+  }
+
+  main {
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  }
+</style>

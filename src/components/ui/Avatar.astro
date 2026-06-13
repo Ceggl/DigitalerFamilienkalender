@@ -1,0 +1,52 @@
+---
+// Avatar display with support for photos, emojis, illustrations
+// Used for person identification in login & task assignment
+
+interface Props {
+  kind: 'photo' | 'emoji' | 'illustration';
+  value: string; // path, emoji, or illustration ID
+  name?: string;
+  color?: string; // Tailwind or hex
+  size?: 'sm' | 'md' | 'lg' | 'xl';
+  className?: string;
+}
+
+const { kind, value, name = '', color = 'bg-blue-500', size = 'md', className = '' } = Astro.props;
+
+const sizeClasses = {
+  sm: 'w-10 h-10 text-sm',
+  md: 'w-14 h-14 text-lg',
+  lg: 'w-20 h-20 text-2xl',
+  xl: 'w-28 h-28 text-4xl',
+};
+
+const containerClasses = `flex items-center justify-center rounded-full border-2 border-white shadow-md ${sizeClasses[size]} ${color} ${className}`;
+---
+
+{
+  kind === 'emoji' && (
+    <div class={containerClasses} title={name}>
+      {value}
+    </div>
+  )
+}
+
+{
+  kind === 'photo' && (
+    <img
+      src={value}
+      alt={name}
+      class={`${sizeClasses[size]} rounded-full border-2 border-white shadow-md object-cover ${className}`}
+    />
+  )
+}
+
+{
+  kind === 'illustration' && (
+    <img
+      src={`/illustrations/${value}.svg`}
+      alt={name}
+      class={`${sizeClasses[size]} rounded-full border-2 border-white shadow-md ${className}`}
+    />
+  )
+}

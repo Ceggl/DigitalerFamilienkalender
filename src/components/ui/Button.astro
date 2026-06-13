@@ -1,0 +1,35 @@
+---
+// Touch-friendly button component
+// Supports multiple variants and large tap targets (min 44px on mobile, larger on kiosk)
+
+interface Props {
+  variant?: 'primary' | 'secondary' | 'ghost';
+  size?: 'sm' | 'md' | 'lg';
+  disabled?: boolean;
+  className?: string;
+}
+
+const { variant = 'primary', size = 'md', disabled = false, className = '' } = Astro.props;
+
+const baseClasses = 'font-semibold rounded-lg transition-all duration-200 active:scale-95';
+
+const variantClasses = {
+  primary: 'bg-blue-600 text-white hover:bg-blue-700 disabled:bg-gray-400',
+  secondary: 'bg-gray-200 text-gray-900 hover:bg-gray-300 disabled:bg-gray-300',
+  ghost: 'bg-transparent text-gray-900 hover:bg-gray-100 disabled:opacity-50',
+};
+
+const sizeClasses = {
+  sm: 'px-4 py-2 text-sm min-h-11',
+  md: 'px-6 py-3 text-base min-h-14',
+  lg: 'px-8 py-4 text-lg min-h-16',
+};
+
+const finalClasses = `${baseClasses} ${variantClasses[variant]} ${sizeClasses[size]} ${className}`;
+---
+
+<button class={finalClasses} disabled={disabled}>
+  <slot />
+</button>
+
+<style></style>

@@ -1,0 +1,14 @@
+---
+// Flexible card component for grouping content
+interface Props {
+  className?: string;
+}
+
+const { className = '' } = Astro.props;
+---
+
+<div class={`bg-white rounded-xl shadow-touch border border-gray-100 p-6 ${className}`}>
+  <slot />
+</div>
+
+<style></style>

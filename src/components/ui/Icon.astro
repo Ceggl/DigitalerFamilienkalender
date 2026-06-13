@@ -1,0 +1,39 @@
+---
+// Icon component using simple Unicode/emoji or SVG
+// For non-reader accessibility, icons should be clear & recognizable
+
+interface Props {
+  icon: string; // emoji or SVG identifier
+  label?: string;
+  size?: 'sm' | 'md' | 'lg' | 'xl';
+  className?: string;
+}
+
+const { icon, label = '', size = 'md', className = '' } = Astro.props;
+
+const sizeClasses = {
+  sm: 'text-lg w-5 h-5',
+  md: 'text-2xl w-8 h-8',
+  lg: 'text-4xl w-12 h-12',
+  xl: 'text-6xl w-16 h-16',
+};
+
+// Check if it's a path or emoji
+const isEmoji = icon.match(/\p{Emoji}/u);
+---
+
+{
+  isEmoji ? (
+    <span class={`inline-flex items-center justify-center ${sizeClasses[size]} ${className}`} title={label}>
+      {icon}
+    </span>
+  ) : (
+    <img
+      src={`/icons/${icon}.svg`}
+      alt={label}
+      class={`${sizeClasses[size]} ${className}`}
+      role={label ? 'img' : 'presentation'}
+      aria-label={label}
+    />
+  )
+}
