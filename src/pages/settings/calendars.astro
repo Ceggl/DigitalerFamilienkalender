@@ -1,0 +1,121 @@
+---
+// Settings page for external calendars
+
+import KioskLayout from '@/layouts/KioskLayout.astro';
+import Card from '@/components/ui/Card.astro';
+import Button from '@/components/ui/Button.astro';
+import ExternalCalendarForm from '@/components/calendar/ExternalCalendarForm.astro';
+import { getOrCreateDefaultHousehold } from '@/lib/services/household';
+import { getExternalCalendarsByHousehold } from '@/lib/services/external-calendar';
+
+const household = await getOrCreateDefaultHousehold();
+let calendars = [];
+
+if (household) {
+  calendars = getExternalCalendarsByHousehold(household.id);
+}
+---
+
+<KioskLayout title="Kalender-Einstellungen">
+  <div class="max-w-4xl mx-auto">
+    <!-- Existing calendars -->
+    <Card className="mb-6">
+      <h2 class="text-2xl font-bold text-gray-900 mb-4">📅 Verbundene Kalender</h2>
+
+      {
+        calendars.length === 0 ? (
+          <p class="text-gray-600">Noch keine externen Kalender verbunden.</p>
+        ) : (
+          <div class="space-y-3">
+            {calendars.map((cal) => (
+              <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200">
+                <div>
+                  <h3 class="font-semibold text-gray-900">{cal.label}</h3>
+                  <p class="text-xs text-gray-500 mt-1">
+                    Anbieter: {cal.provider}
+                  </p>
+                  {cal.lastSyncedAt && (
+                    <p class="text-xs text-gray-500">
+                      Zuletzt synchronisiert:{' '}
+                      {new Date(cal.lastSyncedAt).toLocaleDateString('de-DE')}
+                    </p>
+                  )}
+                </div>
+                <div class="flex gap-2">
+                  <button
+                    class="text-sm px-3 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+                    onclick={`syncCalendar('${cal.id}')`}
+                  >
+                    🔄 Sync
+                  </button>
+                  <button
+                    class="text-sm px-3 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
+                    onclick={`deleteCalendar('${cal.id}')`}
+                  >
+                    🗑️ Löschen
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )
+      }
+    </Card>
+
+    <!-- Add new calendar -->
+    <Card className="mb-6">
+      <h2 class="text-2xl font-bold text-gray-900 mb-4">➕ Neuen Kalender verbinden</h2>
+      <ExternalCalendarForm />
+    </Card>
+
+    <!-- Back button -->
+    <Button variant="ghost" size="md" className="w-full" onclick="window.location.href='/settings'">
+      ← Zurück zu Einstellungen
+    </Button>
+  </div>
+</KioskLayout>
+
+<script define:vars={{ householdId: household?.id }}>
+  window.syncCalendar = async function (externalCalendarId) {
+    try {
+      const response = await fetch('/api/external-calendars/sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ externalCalendarId }),
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        alert(`✅ Synchronisiert! ${result.eventsAdded} Termine hinzugefügt.`);
+        location.reload();
+      } else {
+        alert('Fehler beim Synchronisieren.');
+      }
+    } catch (error) {
+      console.error('Sync error:', error);
+      alert('Verbindungsfehler.');
+    }
+  };
+
+  window.deleteCalendar = async function (externalCalendarId) {
+    if (!confirm('Wirklich löschen? Alle Termine aus diesem Kalender werden entfernt.')) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/external-calendars/${externalCalendarId}`, {
+        method: 'DELETE',
+      });
+
+      if (response.ok) {
+        alert('✅ Gelöscht.');
+        location.reload();
+      } else {
+        alert('Fehler beim Löschen.');
+      }
+    } catch (error) {
+      console.error('Delete error:', error);
+      alert('Verbindungsfehler.');
+    }
+  };
+</script>
