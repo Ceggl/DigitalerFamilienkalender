@@ -1,0 +1,23 @@
+---
+// Non-reader login page
+// Extra large avatars, no text confusion, audio cues
+
+import KioskLayout from '@/layouts/KioskLayout.astro';
+import LoginScreenNonReader from '@/components/calendar/LoginScreenNonReader.astro';
+import { getOrCreateDefaultHousehold } from '@/lib/services/household';
+import { getPersonsByHousehold } from '@/lib/services/person';
+import { getHouseholdSettings } from '@/lib/services/settings';
+
+const household = await getOrCreateDefaultHousehold();
+let people = [];
+let settings = null;
+
+if (household) {
+  people = getPersonsByHousehold(household.id);
+  settings = getHouseholdSettings(household.id);
+}
+---
+
+<KioskLayout title="" showHeader={false}>
+  <LoginScreenNonReader people={people} enableTTS={settings?.ttsEnabled ?? true} />
+</KioskLayout>

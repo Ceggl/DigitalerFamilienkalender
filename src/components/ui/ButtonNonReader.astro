@@ -1,0 +1,46 @@
+---
+// Non-reader optimized button
+// No text, or text hidden behind toggle
+// Large icon/emoji instead
+
+interface Props {
+  icon: string;
+  label?: string; // hidden unless showText=true
+  variant?: 'primary' | 'secondary' | 'ghost';
+  size?: 'sm' | 'md' | 'lg';
+  disabled?: boolean;
+  showText?: boolean;
+  className?: string;
+}
+
+const {
+  icon,
+  label = '',
+  variant = 'primary',
+  size = 'lg',
+  disabled = false,
+  showText = false,
+  className = ''
+} = Astro.props;
+
+const baseClasses = 'font-semibold rounded-2xl transition-all duration-200 active:scale-95 flex flex-col items-center justify-center gap-2';
+
+const variantClasses = {
+  primary: 'bg-blue-600 text-white hover:bg-blue-700 disabled:bg-gray-400',
+  secondary: 'bg-gray-200 text-gray-900 hover:bg-gray-300 disabled:bg-gray-300',
+  ghost: 'bg-transparent text-gray-900 hover:bg-gray-100 disabled:opacity-50',
+};
+
+const sizeClasses = {
+  sm: 'px-4 py-3 text-2xl min-h-16',
+  md: 'px-8 py-4 text-4xl min-h-20',
+  lg: 'px-12 py-6 text-5xl min-h-28',
+};
+
+const finalClasses = `${baseClasses} ${variantClasses[variant]} ${sizeClasses[size]} ${className}`;
+---
+
+<button class={finalClasses} disabled={disabled} title={label}>
+  <span>{icon}</span>
+  {showText && label && <span class="text-xs font-semibold">{label}</span>}
+</button>

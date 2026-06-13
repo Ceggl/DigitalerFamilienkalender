@@ -1,0 +1,67 @@
+---
+// Task card optimized for non-readers
+// Extra large icon, minimal text, color-coded
+// Status indicator uses emoji (no words)
+
+interface Props {
+  id: string;
+  icon: string;
+  title?: string;
+  coins?: number;
+  color?: string; // person color
+  status?: 'open' | 'committed' | 'done' | 'verified' | 'missed';
+  showText?: boolean;
+  className?: string;
+}
+
+const {
+  id,
+  icon,
+  title = '',
+  coins = 0,
+  color = 'bg-blue-100',
+  status = 'open',
+  showText = false,
+  className = '',
+} = Astro.props;
+
+const statusEmoji = {
+  open: '⭕',
+  committed: '👍',
+  done: '✅',
+  verified: '⭐',
+  missed: '❌',
+};
+
+const statusColor = {
+  open: 'ring-gray-300',
+  committed: 'ring-yellow-400',
+  done: 'ring-green-400',
+  verified: 'ring-blue-500',
+  missed: 'ring-red-400',
+};
+---
+
+<a
+  href={`/task/${id}`}
+  class={`block rounded-3xl border-4 p-8 transition-all duration-200 active:scale-90 hover:shadow-xl min-h-56 flex flex-col items-center justify-center gap-4 ring-4 ${color} ${statusColor[status]} ${className}`}
+>
+  <!-- Large icon -->
+  <div class="text-7xl">{icon}</div>
+
+  <!-- Status emoji (no text needed) -->
+  <div class="text-5xl">{statusEmoji[status]}</div>
+
+  <!-- Title (optional) -->
+  {showText && title && <div class="text-center text-sm font-semibold text-gray-700 line-clamp-2">{title}</div>}
+
+  <!-- Coins (visual) -->
+  {coins > 0 && (
+    <div class="flex gap-1 text-2xl">
+      {Array.from({ length: Math.min(coins, 5) }).map(() => (
+        <span>🪙</span>
+      ))}
+      {coins > 5 && <span class="text-sm font-bold text-yellow-600">+{coins - 5}</span>}
+    </div>
+  )}
+</a>

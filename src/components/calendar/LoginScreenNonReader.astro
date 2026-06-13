@@ -1,0 +1,88 @@
+---
+// Non-reader login screen
+// Large avatars, no text prompts, audio cues
+// Motion-based (tap animation)
+
+interface Props {
+  people: Array<{
+    id: string;
+    displayName: string;
+    avatarKind: 'photo' | 'emoji' | 'illustration';
+    avatarValue: string;
+    color: string;
+    role: 'adult' | 'caregiver' | 'child';
+  }>;
+  enableTTS?: boolean;
+}
+
+import Avatar from '@/components/ui/Avatar.astro';
+
+const { people, enableTTS = true } = Astro.props;
+---
+
+<div class="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-100 to-purple-100 p-4">
+  <div class="w-full max-w-6xl">
+    <!-- Welcome animation -->
+    <div class="text-center mb-12 animate-fade-in">
+      <div class="text-8xl mb-4 animate-bounce">👋</div>
+      <div class="text-6xl font-bold text-gray-900">Hallo!</div>
+    </div>
+
+    <!-- Avatar grid – EXTRA LARGE for non-readers -->
+    <div class="grid grid-cols-2 sm:grid-cols-3 gap-8 mb-12">
+      {
+        people.map((p, idx) => (
+          <button
+            class="flex flex-col items-center gap-6 p-8 rounded-3xl bg-white border-4 border-gray-100 hover:border-blue-400 hover:shadow-2xl transition-all duration-200 active:scale-90 min-h-72"
+            onclick={`selectPerson('${p.id}', '${p.displayName}', ${enableTTS})`}
+            title={p.displayName}
+          >
+            <Avatar
+              kind={p.avatarKind}
+              value={p.avatarValue}
+              name={p.displayName}
+              color={p.color}
+              size="xl"
+            />
+            {/* Name shown small, for reference only */}
+            <span class="text-center text-base font-bold text-gray-600 line-clamp-2">
+              {p.displayName}
+            </span>
+          </button>
+        ))
+      }
+    </div>
+
+    <!-- Back button (if needed) -->
+    <div class="flex justify-center">
+      <a
+        href="/"
+        class="text-4xl hover:scale-110 transition-transform duration-200 active:scale-95"
+        title="Zurück zur Startseite"
+      >
+        ←
+      </a>
+    </div>
+  </div>
+</div>
+
+<script define:vars={{ enableTTS }}>
+  window.selectPerson = async function (personId, personName, enableTTS) {
+    // Visual feedback
+    const button = event.target.closest('button');
+    button.classList.add('animate-confirm');
+
+    // Audio feedback if TTS enabled
+    if (enableTTS && 'speechSynthesis' in window) {
+      const utterance = new SpeechSynthesisUtterance(`Hallo ${personName}!`);
+      utterance.lang = 'de-DE';
+      utterance.rate = 0.9;
+      window.speechSynthesis.speak(utterance);
+    }
+
+    // Redirect after animation
+    setTimeout(() => {
+      window.location.href = `/my-tasks?personId=${personId}`;
+    }, 400);
+  };
+</script>

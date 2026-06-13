@@ -1,0 +1,87 @@
+---
+// Non-reader optimized "my tasks" page
+// No text labels, huge icons, color-coding, animations
+// TTS support for task names on tap
+
+import KioskLayout from '@/layouts/KioskLayout.astro';
+import TaskCardNonReader from '@/components/tasks/TaskCardNonReader.astro';
+import CoinGlassAnimation from '@/components/tasks/CoinGlassAnimation.astro';
+import { getTasksByHousehold } from '@/lib/services/task';
+import { getCoinBalance } from '@/lib/services/coins';
+import { getOrCreateDefaultHousehold } from '@/lib/services/household';
+import { getHouseholdSettings } from '@/lib/services/settings';
+
+const personId = new URL(Astro.request.url).searchParams.get('personId') || '';
+
+if (!personId) {
+  return Astro.redirect('/login-non-reader');
+}
+
+const household = await getOrCreateDefaultHousehold();
+if (!household) {
+  return Astro.redirect('/');
+}
+
+const tasks = getTasksByHousehold(household.id).slice(0, 6); // Show max 6
+const coinBalance = getCoinBalance(personId);
+const settings = getHouseholdSettings(household.id);
+
+// Mock tasks for demo
+const todaysTasks = tasks.map((t, idx) => ({
+  id: t.id,
+  icon: t.icon,
+  title: t.title,
+  coins: t.coins,
+  color: ['bg-person-red', 'bg-person-blue', 'bg-person-green', 'bg-person-purple'][
+    idx % 4
+  ],
+  status: (
+    ['open', 'committed', 'open', 'done', 'verified', 'missed'] as const
+  )[idx % 6],
+}));
+---
+
+<KioskLayout title="Meine Aufgaben" showHeader={false}>
+  <div class="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 p-6">
+    <!-- Coin Glass (top) -->
+    <div class="mb-8">
+      <CoinGlassAnimation balance={coinBalance} targetCoins={50} showAnimation={true} />
+    </div>
+
+    <!-- Task Grid -->
+    <div class="grid grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto mb-12">
+      {
+        todaysTasks.map((task) => (
+          <TaskCardNonReader
+            id={task.id}
+            icon={task.icon}
+            title={task.title}
+            coins={task.coins}
+            color={task.color}
+            status={task.status}
+            showText={false}
+          />
+        ))
+      }
+    </div>
+
+    <!-- Welcome message (emoji only) -->
+    <div class="text-center">
+      <div class="text-6xl animate-bounce">👇</div>
+      <div class="text-5xl mt-4">Tippe eine Aufgabe!</div>
+    </div>
+  </div>
+</KioskLayout>
+
+<script>
+  // Add audio cues on task tap (if TTS enabled)
+  document.addEventListener('click', async (e) => {
+    const taskCard = (e.target as HTMLElement).closest('a[href*="/task/"]');
+    if (!taskCard && 'speechSynthesis' in window) {
+      const title = taskCard?.getAttribute('title') || 'Aufgabe';
+      const utterance = new SpeechSynthesisUtterance(title);
+      utterance.lang = 'de-DE';
+      window.speechSynthesis.speak(utterance);
+    }
+  });
+</script>

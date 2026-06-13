@@ -1,0 +1,84 @@
+---
+// Animated coin glass
+// Fills up as coins are earned
+// Celebratory animation on milestones
+
+interface Props {
+  balance: number;
+  targetCoins?: number;
+  showAnimation?: boolean;
+  className?: string;
+}
+
+const { balance, targetCoins = 50, showAnimation = true, className = '' } = Astro.props;
+const percentage = Math.min((balance / targetCoins) * 100, 100);
+const isFull = percentage >= 100;
+---
+
+<div class={`w-full flex justify-center ${className}`}>
+  <div class={`relative ${showAnimation && isFull ? 'animate-bounce' : ''}`}>
+    <!-- Glass jar -->
+    <div class="relative w-32 h-48 bg-gradient-to-b from-cyan-50 to-cyan-100 rounded-b-3xl border-8 border-amber-900 shadow-xl mx-auto">
+      <!-- Jar shine effect -->
+      <div class="absolute top-0 left-2 w-3 h-24 bg-white opacity-20 rounded-full"></div>
+
+      <!-- Coin fill (animated) -->
+      <div
+        class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-yellow-400 via-yellow-300 to-yellow-200 rounded-b-2xl transition-all duration-700 ease-out"
+        style={`height: ${percentage}%`}
+      >
+        <!-- Coin animation inside -->
+        {
+          showAnimation && (
+            <div class="absolute inset-0 flex items-center justify-center text-4xl animate-pulse">
+              🪙
+            </div>
+          )
+        }
+      </div>
+
+      <!-- Jar lid -->
+      <div class="absolute -top-4 left-1/2 transform -translate-x-1/2 w-24 h-8 bg-amber-900 rounded-t-2xl border-4 border-amber-800 shadow-md"></div>
+
+      <!-- Percentage text (small, bottom) -->
+      <div class="absolute -bottom-12 left-1/2 transform -translate-x-1/2 text-center text-sm font-bold text-gray-900">
+        {Math.round(percentage)}%
+      </div>
+    </div>
+
+    <!-- Large coin emoji to the side -->
+    <div class="absolute -right-16 top-1/2 transform -translate-y-1/2 text-6xl animate-bounce">
+      🪙
+    </div>
+
+    <!-- Celebration confetti (on full) -->
+    {
+      isFull && (
+        <div class="absolute inset-0 pointer-events-none">
+          {Array.from({ length: 12 }).map((_, i) => (
+            <div
+              class="absolute text-4xl animate-spin"
+              style={`
+                left: ${Math.random() * 100}%;
+                top: -50px;
+                animation: float ${2 + Math.random() * 1}s ease-in forwards;
+                animation-delay: ${i * 0.1}s;
+              `}
+            >
+              ✨
+            </div>
+          ))}
+        </div>
+      )
+    }
+  </div>
+</div>
+
+<style>
+  @keyframes float {
+    to {
+      transform: translateY(400px) rotate(360deg);
+      opacity: 0;
+    }
+  }
+</style>
