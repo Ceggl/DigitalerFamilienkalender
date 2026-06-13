@@ -1,0 +1,59 @@
+---
+// Mobile rewards page
+
+import MobileLayout from '@/layouts/MobileLayout.astro';
+import Card from '@/components/ui/Card.astro';
+import { getOrCreateDefaultHousehold } from '@/lib/services/household';
+import { getRewardsByHousehold } from '@/lib/services/reward';
+import { getCoinBalance } from '@/lib/services/coins';
+import { getSessionFromRequest } from '@/lib/auth/session';
+
+const personId = new URL(Astro.request.url).searchParams.get('personId') || '';
+const session = getSessionFromRequest(Astro.request.cookies);
+const effectivePersonId = personId || session?.personId;
+
+const household = await getOrCreateDefaultHousehold();
+const rewards = household ? getRewardsByHousehold(household.id) : [];
+const coinBalance = getCoinBalance(effectivePersonId);
+---
+
+<MobileLayout title="Belohnungen">
+  <!-- Coin status -->
+  <Card className="mb-4">
+    <div className="text-center">
+      <p className="text-sm text-gray-600">Deine Münzen</p>
+      <p className="text-3xl font-bold text-yellow-600">{coinBalance} 🪙</p>
+    </div>
+  </Card>
+
+  <!-- Rewards grid -->
+  <div className="grid grid-cols-2 gap-3">
+    {
+      rewards.map((reward) => {
+        const canAfford = coinBalance >= reward.costCoins;
+        return (
+          <Card
+            className={`text-center p-4 cursor-pointer transition-all ${
+              canAfford
+                ? 'border-green-400 hover:border-green-600'
+                : 'opacity-50 border-gray-300'
+            }`}
+          >
+            <div className="text-3xl mb-2">{reward.icon}</div>
+            <h3 className="text-xs font-semibold text-gray-900 line-clamp-2">
+              {reward.title}
+            </h3>
+            <p className="text-sm font-bold text-yellow-600 mt-2">
+              🪙 {reward.costCoins}
+            </p>
+            {!canAfford && (
+              <p className="text-xs text-gray-500 mt-1">
+                {reward.costCoins - coinBalance} zu wenig
+              </p>
+            )}
+          </Card>
+        );
+      })
+    }
+  </div>
+</MobileLayout>

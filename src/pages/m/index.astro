@@ -1,0 +1,71 @@
+---
+// Mobile home page (responsive variant of /)
+
+import MobileLayout from '@/layouts/MobileLayout.astro';
+import Card from '@/components/ui/Card.astro';
+import Button from '@/components/ui/Button.astro';
+import { getOrCreateDefaultHousehold } from '@/lib/services/household';
+import { getEventsByDateRange } from '@/lib/services/calendar-event';
+
+const household = await getOrCreateDefaultHousehold();
+const today = new Date();
+const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+const monthEnd = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+
+let events = [];
+if (household) {
+  events = getEventsByDateRange(household.id, monthStart, monthEnd);
+}
+
+const todayString = today.toLocaleDateString('de-DE', {
+  weekday: 'long',
+  month: 'long',
+  day: 'numeric',
+});
+---
+
+<MobileLayout title="Kalender" showNav={true}>
+  <!-- Quick date info -->
+  <Card className="mb-4">
+    <div class="flex items-center justify-between">
+      <div>
+        <h2 class="text-lg font-bold text-gray-900">{todayString}</h2>
+      </div>
+      <div class="text-3xl font-bold text-blue-600">{today.getDate()}</div>
+    </div>
+  </Card>
+
+  <!-- Today's events (compact) -->
+  <Card className="mb-4">
+    <h3 class="text-sm font-semibold text-gray-900 mb-3">📋 Heute</h3>
+    <div class="space-y-2">
+      {
+        events
+          .filter((e) => e.startsAt.startsWith(today.toISOString().split('T')[0]))
+          .slice(0, 3)
+          .map((event) => (
+            <div class="text-xs text-gray-600 border-l-4 border-blue-400 pl-2 py-1">
+              <strong>{event.title}</strong>
+              {event.icon && <span class="ml-2">{event.icon}</span>}
+            </div>
+          ))
+      }
+      {
+        events.filter((e) => e.startsAt.startsWith(today.toISOString().split('T')[0])).length ===
+          0 && (
+          <p class="text-xs text-gray-500">Keine Termine heute</p>
+        )
+      }
+    </div>
+  </Card>
+
+  <!-- Quick actions -->
+  <div className="grid grid-cols-2 gap-2">
+    <Button variant="primary" size="md" className="!text-sm" onclick="window.location.href='/m/my-tasks'">
+      📋 Meine Aufgaben
+    </Button>
+    <Button variant="secondary" size="md" className="!text-sm" onclick="window.location.href='/m/rewards'">
+      🎁 Belohnungen
+    </Button>
+  </div>
+</MobileLayout>

@@ -1,15 +1,17 @@
 ---
 // Mobile-optimized layout for phones/tablets
-// Responsive, portrait-first
+// Responsive, portrait-first, PWA-ready
 
 import '@/styles/base.css';
+import '@/styles/animations.css';
 
 interface Props {
   title?: string;
   showHeader?: boolean;
+  showNav?: boolean;
 }
 
-const { title = 'Familienkalender', showHeader = true } = Astro.props;
+const { title = 'Familienkalender', showHeader = true, showNav = true } = Astro.props;
 ---
 
 <!doctype html>
@@ -18,41 +20,151 @@ const { title = 'Familienkalender', showHeader = true } = Astro.props;
     <meta charset="UTF-8" />
     <meta
       name="viewport"
-      content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no"
+      content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no, maximum-scale=5"
     />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="theme-color" content="#3b82f6" />
+    <meta
+      name="description"
+      content="Datenschutzfreundlicher Familienkalender für gemeinsame Aufgaben und Termine"
+    />
+
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/manifest.json" />
+    <link rel="icon" href="/icon-192.png" />
+    <link rel="apple-touch-icon" href="/icon-192.png" />
+
     <title>{title}</title>
   </head>
-  <body class="flex flex-col min-h-screen bg-gray-50 safe-area-inset-bottom">
+  <body class="flex flex-col min-h-screen bg-gray-50">
     {
       showHeader && (
-        <header class="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
-          <div class="max-w-lg mx-auto px-4 py-3">
+        <header class="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50 safe-area-inset-top">
+          <div class="max-w-lg mx-auto px-4 py-3 flex items-center justify-between">
             <h1 class="text-xl font-bold text-gray-900">{title}</h1>
+            <button
+              id="menu-btn"
+              class="text-gray-600 hover:text-gray-900 transition-colors"
+              title="Menü"
+            >
+              ☰
+            </button>
           </div>
         </header>
       )
     }
 
-    <main class="flex-1 max-w-lg mx-auto w-full p-4 pb-safe-area-inset-bottom">
+    <main class="flex-1 max-w-lg mx-auto w-full p-4">
       <slot />
     </main>
 
-    <!-- Spacer for iOS safe area -->
+    {
+      showNav && (
+        <nav class="bg-white border-t border-gray-200 sticky bottom-0 safe-area-inset-bottom">
+          <div class="max-w-lg mx-auto px-4 py-2 flex justify-around">
+            <a
+              href="/my-tasks"
+              class="flex flex-col items-center gap-1 py-3 px-4 rounded-lg hover:bg-gray-100 transition-colors text-sm text-gray-600 hover:text-blue-600"
+            >
+              <span class="text-xl">📋</span>
+              <span>Aufgaben</span>
+            </a>
+            <a
+              href="/"
+              class="flex flex-col items-center gap-1 py-3 px-4 rounded-lg hover:bg-gray-100 transition-colors text-sm text-gray-600 hover:text-blue-600"
+            >
+              <span class="text-xl">📅</span>
+              <span>Kalender</span>
+            </a>
+            <a
+              href="/rewards"
+              class="flex flex-col items-center gap-1 py-3 px-4 rounded-lg hover:bg-gray-100 transition-colors text-sm text-gray-600 hover:text-blue-600"
+            >
+              <span class="text-xl">🎁</span>
+              <span>Belohnungen</span>
+            </a>
+            <a
+              href="/login"
+              class="flex flex-col items-center gap-1 py-3 px-4 rounded-lg hover:bg-gray-100 transition-colors text-sm text-gray-600 hover:text-blue-600"
+            >
+              <span class="text-xl">👤</span>
+              <span>Profil</span>
+            </a>
+          </div>
+        </nav>
+      )
+    }
+
+    <!-- Safe area spacer for notched devices -->
     <div class="h-safe-area-inset-bottom"></div>
   </body>
 </html>
 
 <style is:global>
-  html,
+  html {
+    /* Smooth scrolling */
+    scroll-behavior: smooth;
+  }
+
   body {
     margin: 0;
     padding: 0;
   }
 
-  main {
-    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  /* Prevent zoom on input focus (iOS) -->
+  input,
+  textarea,
+  select {
+    font-size: 16px;
+  }
+
+  /* Prevent pull-to-refresh on Android */
+  body {
+    overscroll-behavior-y: contain;
   }
 </style>
+
+<script>
+  // Register service worker
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker
+      .register('/sw.js')
+      .then((reg) => console.log('Service Worker registered'))
+      .catch((err) => console.error('Service Worker registration failed:', err));
+  }
+
+  // Connect to real-time events
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initRealtime);
+  } else {
+    initRealtime();
+  }
+
+  function initRealtime() {
+    const checkAuth = fetch('/api/auth/me').then((r) => r.json());
+    checkAuth.then((auth) => {
+      if (auth.authenticated) {
+        // Connect to SSE stream
+        const eventSource = new EventSource('/api/realtime/events');
+        eventSource.onmessage = (event) => {
+          const data = JSON.parse(event.data);
+          handleRealtimeEvent(data);
+        };
+        eventSource.onerror = () => {
+          console.log('Real-time connection closed');
+          eventSource.close();
+        };
+      }
+    });
+  }
+
+  function handleRealtimeEvent(event) {
+    // Reload page on significant events (task done, coins earned, etc.)
+    if (['task_done', 'coins_earned', 'event_created'].includes(event.type)) {
+      // Optionally reload or just notify
+      console.log('Real-time update:', event.type);
+      // Could trigger a toast notification here
+    }
+  }
+</script>

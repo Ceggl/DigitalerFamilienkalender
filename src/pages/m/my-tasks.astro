@@ -1,0 +1,84 @@
+---
+// Mobile my-tasks (responsive)
+
+import MobileLayout from '@/layouts/MobileLayout.astro';
+import Card from '@/components/ui/Card.astro';
+import CoinDisplay from '@/components/tasks/CoinDisplay.astro';
+import { getTasksByHousehold } from '@/lib/services/task';
+import { getCoinBalance } from '@/lib/services/coins';
+import { getOrCreateDefaultHousehold } from '@/lib/services/household';
+import { getSessionFromRequest } from '@/lib/auth/session';
+
+const personId = new URL(Astro.request.url).searchParams.get('personId') || '';
+const session = getSessionFromRequest(Astro.request.cookies);
+
+if (!personId && !session) {
+  return Astro.redirect('/login');
+}
+
+const effectivePersonId = personId || session?.personId;
+
+const household = await getOrCreateDefaultHousehold();
+const tasks = household ? getTasksByHousehold(household.id) : [];
+const coinBalance = getCoinBalance(effectivePersonId);
+
+const todaysTasks = tasks.slice(0, 4).map((t, idx) => ({
+  id: t.id,
+  title: t.title,
+  icon: t.icon,
+  coins: t.coins,
+  status: (['open', 'committed', 'done', 'verified'] as const)[idx % 4],
+}));
+---
+
+<MobileLayout title="Aufgaben">
+  <!-- Coins (compact) -->
+  <div className="mb-4">
+    <Card>
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-xs text-gray-600">Deine Münzen</p>
+          <p className="text-2xl font-bold text-yellow-600">{coinBalance} 🪙</p>
+        </div>
+        <a
+          href="/m/rewards"
+          className="text-sm font-semibold text-blue-600 hover:text-blue-700"
+        >
+          Belohnungen →
+        </a>
+      </div>
+    </Card>
+  </div>
+
+  <!-- Tasks list -->
+  <div className="space-y-3">
+    {
+      todaysTasks.map((task) => (
+        <a
+          href={`/task/${task.id}`}
+          className="block p-4 bg-white rounded-lg border border-gray-200 hover:border-blue-400 hover:shadow-md transition-all active:scale-95"
+        >
+          <div className="flex items-start gap-3">
+            <div className="text-3xl">{task.icon}</div>
+            <div className="flex-1 min-w-0">
+              <h3 className="font-semibold text-gray-900 truncate">{task.title}</h3>
+              {task.coins > 0 && (
+                <p className="text-xs text-yellow-600 mt-1">🪙 {task.coins} Coins</p>
+              )}
+            </div>
+            <div className="text-xl">
+              {
+                {
+                  open: '⭕',
+                  committed: '👍',
+                  done: '✅',
+                  verified: '⭐',
+                }[task.status]
+              }
+            </div>
+          </div>
+        </a>
+      ))
+    }
+  </div>
+</MobileLayout>
